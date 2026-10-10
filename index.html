@@ -23,7 +23,17 @@ dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius
 </style>
 </head>
 <body>
-<header><h1 id="greeting">WELCOME, BOSS … HAVE A GOOD DAY :)</h1><div class="sub">PERSONAL LINKS & WORKSPACE</div></header>
+<header><h1 id="greeting">WELCOME, BOSS … HAVE A GOOD DAY :)</h1><div class="sub">PERSONAL LINKS & WORKSPACE</div>
+<div id="authBar" style="margin-top:14px">
+  <span id="authMessage" style="font-size:12px;color:#b9d8cd">Login diperlukan untuk menyimpan data dengan aman.</span>
+  <div id="authControls" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+    <input id="authEmail" type="email" placeholder="Email" autocomplete="username" style="max-width:220px;width:100%;background:#092e27;color:#fff;border:1px solid #3c7565;border-radius:5px;padding:10px">
+    <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" style="max-width:220px;width:100%;background:#092e27;color:#fff;border:1px solid #3c7565;border-radius:5px;padding:10px">
+    <button id="loginBtn" class="btn primary" type="button">Login</button>
+    <button id="signupBtn" class="btn secondary" type="button">Buat akun</button>
+    <button id="logoutBtn" class="btn secondary" type="button" hidden>Logout</button>
+  </div>
+</div></header>
 <div class="wrap">
 <main>
   <div class="toolbar" role="tablist" aria-label="Kategori">
@@ -33,8 +43,8 @@ dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius
   </div>
   <div class="tablehead"><div>Kategori</div><div>Link Drive</div><div>Google</div><div>ID-Pasw</div><div>Notes</div></div>
   <div id="sections"></div>
-  <div class="status" id="status" aria-live="polite">Demo mode aktif. Hubungkan Supabase untuk menyimpan perubahan online.</div>
-  <div class="setup" id="setupHint">Supabase belum dikonfigurasi. Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_ANON_KEY</b> di file index.html, lalu jalankan SQL pada <b>schema.sql</b>. Jangan pernah memasukkan service-role key ke HTML publik.</div>
+  <div class="status" id="status" aria-live="polite">Login ke Supabase untuk memuat dan menyimpan data online.</div>
+  <div class="setup" id="setupHint">Konfigurasi <b>SUPABASE_URL</b> dan <b>SUPABASE_ANON_KEY</b>, jalankan SQL pembaruan pada <b>schema.sql</b>, lalu buat akun/login. Jangan pernah memasukkan service-role key ke HTML publik.</div>
 </main>
 <aside class="side" aria-label="Dekorasi"><svg class="pie" viewBox="0 0 200 200" role="img" aria-label="Animated decorative pie chart"><circle cx="100" cy="100" r="96" fill="#5d9bd0"/><path d="M100 100 L100 4 A96 96 0 0 1 156 22 Z" fill="#72addb"/><path d="M100 100 L156 22 A96 96 0 0 1 194 82 Z" fill="#4f91c7"/><path d="M100 100 L194 82 A96 96 0 0 1 172 166 Z" fill="#5d9bd0"/><path d="M100 100 L172 166 A96 96 0 0 1 100 196 Z" fill="#f17e2e"/><path d="M100 100 L100 196 A96 96 0 0 1 24 158 Z" fill="#f17e2e"/><path d="M100 100 L24 158 A96 96 0 0 1 8 72 Z" fill="#fff000"/><path d="M100 100 L8 72 A96 96 0 0 1 42 23 Z" fill="#ffeb00"/><path d="M100 100 L42 23 A96 96 0 0 1 100 4 Z" fill="#ffbf00"/><g stroke="#d9d6a6" stroke-width="1"><path d="M100 100V4 M100 100L156 22 M100 100L194 82 M100 100L172 166 M100 100V196 M100 100L24 158 M100 100L8 72 M100 100L42 23"/></g></svg><p>Little things, organized.<br>Big things, in progress.</p></aside>
 </div>
@@ -43,10 +53,11 @@ dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius
 <script>
 // 1) Isi kredensial project Supabase Anda di bawah ini.
 // Gunakan anon/publishable key + Row Level Security, BUKAN service_role key.
-const SUPABASE_URL = "https://nuzigytcmwqwjzufosxo.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_QCQN5gFX7HnDBSPWe1TsRQ_4GJmzVrJ";
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
 const client = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let currentUser = null;
 
 const seed = [
  {id:"demo-1",tab:"hobbi",title:"Instagram",drive_url:"https://google.com/andrews",google_value:"",id_pasw:"",notes:""},
@@ -75,12 +86,55 @@ const add=document.createElement("button");add.className="add";add.textContent="
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));render()}));
 function openEditor(item){$("itemId").value=item.id||"";$("fTitle").value=item.title||"";$("fDrive").value=item.drive_url||"";$("fGoogle").value=item.google_value||"";$("fPass").value=item.id_pasw||"";$("fNotes").value=item.notes||"";$("modalTitle").textContent=item.id?"Edit item":"Tambah item";$("editor").showModal()}
 $("cancel").onclick=()=>$("editor").close();
-async function loadFromSupabase(){if(!client)return;try{const {data,error}=await client.from("dashboard_items").select("*").order("sort_order",{ascending:true});if(error)throw error;items=data.map(r=>({id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""}));$("setupHint").hidden=true;status("Terhubung ke Supabase. Perubahan disimpan online.");render()}catch(e){status("Supabase belum bisa dibaca: "+e.message,true)}}
+async function loadFromSupabase(){
+  if(!client){$("authMessage").textContent="Isi SUPABASE_URL dan SUPABASE_ANON_KEY di index.html.";return}
+  const {data:sessionData}=await client.auth.getSession();
+  currentUser=sessionData.session?.user||null;
+  updateAuthUI();
+  if(!currentUser){status("Silakan login untuk memuat data privat.");return}
+  try{
+    const {data,error}=await client.from("dashboard-iteeems").select("*").order("sort_order",{ascending:true});
+    if(error)throw error;
+    items=(data||[]).map(r=>({id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""}));
+    $("setupHint").hidden=true;status("Login berhasil. Data privat dimuat dari Supabase.");render()
+  }catch(e){status("Supabase belum bisa dibaca: "+e.message,true)}
+}
+function updateAuthUI(){
+  $("authEmail").hidden=!!currentUser;$("authPassword").hidden=!!currentUser;
+  $("loginBtn").hidden=!!currentUser;$("signupBtn").hidden=!!currentUser;
+  $("logoutBtn").hidden=!currentUser;
+  $("authMessage").textContent=currentUser?("Login sebagai "+currentUser.email):"Login diperlukan untuk menyimpan data dengan aman.";
+}
+$("loginBtn").addEventListener("click",async()=>{
+  if(!client){status("Isi konfigurasi Supabase terlebih dahulu.",true);return}
+  const email=$("authEmail").value.trim(),password=$("authPassword").value;
+  if(!email||!password){status("Isi email dan password.",true);return}
+  const {error}=await client.auth.signInWithPassword({email,password});
+  if(error){status("Login gagal: "+error.message,true);return}
+  await loadFromSupabase();
+});
+$("signupBtn").addEventListener("click",async()=>{
+  if(!client){status("Isi konfigurasi Supabase terlebih dahulu.",true);return}
+  const email=$("authEmail").value.trim(),password=$("authPassword").value;
+  if(!email||password.length<8){status("Isi email dan password minimal 8 karakter.",true);return}
+  const {data,error}=await client.auth.signUp({email,password});
+  if(error){status("Pendaftaran gagal: "+error.message,true);return}
+  if(!data.session){status("Akun dibuat. Cek email untuk konfirmasi, lalu login.",false);return}
+  await loadFromSupabase();
+});
+$("logoutBtn").addEventListener("click",async()=>{
+  if(client)await client.auth.signOut();
+  currentUser=null;updateAuthUI();status("Sudah logout.");render();
+});
+if(client)client.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;updateAuthUI()});
 $("editForm").addEventListener("submit",async e=>{e.preventDefault();const id=$("itemId").value;const old=items.find(x=>x.id===id);const row={tab:old?.tab||activeTab,title:$("fTitle").value.trim(),drive_url:$("fDrive").value.trim(),google_value:$("fGoogle").value.trim(),id_pasw:$("fPass").value,notes:$("fNotes").value.trim()};
 if(!row.title){status("Nama kategori wajib diisi.",true);return}
-if(client){try{let result;if(id){result=await client.from("dashboard_items").update(row).eq("id",id).select().single()}else{result=await client.from("dashboard_items").insert(row).select().single()}if(result.error)throw result.error;const r=result.data;const normalized={id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""};if(id)items=items.map(x=>x.id===id?normalized:x);else items.push(normalized);status("Berhasil disimpan ke Supabase.")}catch(err){status("Gagal menyimpan: "+err.message,true);return}}
+if(client){try{
+if(!currentUser){status("Login terlebih dahulu untuk menyimpan data.",true);return}
+row.owner_id=currentUser.id;
+let result;if(id){result=await client.from("dashboard-iteeems").update(row).eq("id",id).eq("owner_id",currentUser.id).select().single()}else{result=await client.from("dashboard-iteeems").insert(row).select().single()}if(result.error)throw result.error;const r=result.data;const normalized={id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""};if(id)items=items.map(x=>x.id===id?normalized:x);else items.push(normalized);status("Berhasil disimpan ke Supabase.")}catch(err){status("Gagal menyimpan: "+err.message,true);return}}
 else{if(id)items=items.map(x=>x.id===id?{...x,...row}:x);else items.push({...row,id:"local-"+Date.now()});status("Tersimpan di tampilan demo saja. Hubungkan Supabase agar tersimpan online.");}
 $("editor").close();render()});
-render();loadFromSupabase();
+render();updateAuthUI();loadFromSupabase();
 </script>
 </body></html>
