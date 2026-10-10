@@ -16,6 +16,7 @@ header{padding:28px 22px 18px;text-align:center}h1{font-family:Georgia,serif;fon
 .item{padding:10px 8px;border-bottom:1px solid var(--line);min-height:62px}.field{min-width:0;overflow-wrap:anywhere;color:#c7df82;font-weight:650}.field a{color:#f4f5ef;text-decoration:none}.field a:hover{text-decoration:underline}.category{background:var(--green);color:#12251b;border:0;padding:10px 12px;font-weight:850;text-transform:uppercase;display:inline-block;max-width:100%;overflow-wrap:anywhere}
 .edit{margin-top:5px;border:0;background:#d5eacb;color:#102820;border-radius:4px;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer}.value{display:block}.empty{color:#91b5a6;font-weight:400;font-size:13px}
 .add{border:0;background:var(--pale);color:var(--ink);font-weight:800;padding:10px 16px;margin:12px 0 0;cursor:pointer}.side{position:sticky;top:22px;text-align:center;padding-top:45px}.pie{width:210px;height:210px;max-width:100%;animation:spin 24s linear infinite;filter:drop-shadow(0 8px 18px #061f1a66)}@keyframes spin{to{transform:rotate(360deg)}}.side p{font-size:12px;color:var(--muted);line-height:1.5}
+.dl{display:block;width:100%;max-width:1406px;margin:20px auto 0;border:0;border-radius:14px;padding:30px 20px;font-size:clamp(22px,4vw,38px);font-weight:900;letter-spacing:1px;text-transform:uppercase;color:#102820;cursor:pointer;background:linear-gradient(90deg,#83df68,#f5e85c,#83df68,#f5e85c);background-size:300% 100%;animation:flow 4s linear infinite;box-shadow:0 10px 30px #061f1a88}@keyframes flow{to{background-position:-300% 0}}
 .status{font-size:12px;color:var(--muted);min-height:18px;margin:10px 0}.status.error{color:#ffb5a8}.setup{background:#123f35;border:1px solid var(--line);padding:12px;border-radius:8px;margin-top:14px;font-size:12px;color:var(--muted)}
 dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius:12px;background:#103d33;color:var(--text);padding:22px;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#001b16bb}dialog h2{margin:0 0 16px}label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}input,textarea,select{width:100%;background:#092e27;color:#fff;border:1px solid #3c7565;border-radius:5px;padding:10px;font:inherit}textarea{min-height:75px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.btn{border:0;border-radius:5px;padding:10px 14px;font-weight:800;cursor:pointer}.primary{background:var(--green);color:#102820}.secondary{background:#25594d;color:#fff}.danger{background:#783d38;color:white}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}.side{position:static;padding:8px 0 20px;grid-row:1}.pie{width:115px;height:115px}.side p{display:none}.tablehead{display:none}.item{grid-template-columns:1fr 1fr;gap:10px;padding:14px 8px}.field{background:#12483c;padding:9px;border-radius:5px}.category{width:100%}.section{margin-top:22px}}
@@ -23,7 +24,7 @@ dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius
 </style>
 </head>
 <body>
-<header><h1 id="greeting">WELCOME, BOSS … HAVE A GOOD DAY :)</h1><div class="sub">PERSONAL LINKS & WORKSPACE</div></header>
+<header><h1 id="greeting">WELCOME, BOSS … HAVE A GOOD DAY :)</h1><div class="sub">PERSONAL LINKS & WORKSPACE</div><button class="dl" id="dlXlsx" type="button">⬇ Download XLSX</button></header>
 <div class="wrap">
 <main>
   <div class="toolbar" role="tablist" aria-label="Kategori">
@@ -40,6 +41,7 @@ dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius
 </div>
 <dialog id="editor"><form id="editForm"><h2 id="modalTitle">Edit item</h2><input type="hidden" id="itemId"><label for="fTitle">Kategori / nama</label><input id="fTitle" required maxlength="100"><label for="fDrive">Link Drive</label><input id="fDrive" type="url" placeholder="https://drive.google.com/..."><label for="fGoogle">Google / akun terkait</label><input id="fGoogle" maxlength="200"><label for="fPass">ID-Pasw (hindari password penting di dashboard publik)</label><input id="fPass" maxlength="200" autocomplete="off"><label for="fNotes">Notes</label><textarea id="fNotes" maxlength="2000"></textarea><div class="actions"><button type="button" class="btn secondary" id="cancel">Batal</button><button type="submit" class="btn primary">Simpan</button></div></form></dialog>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const SUPABASE_URL = "https://nuzigytcmwqwjzufosxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_QCQN5gFX7HnDBSPWe1TsRQ_4GJmzVrJ";
@@ -87,6 +89,22 @@ if(client){try{
 let result;if(id){result=await client.from("dashboard-iteeems").update(row).eq("id",id).select().single()}else{result=await client.from("dashboard-iteeems").insert(row).select().single()}if(result.error)throw result.error;const r=result.data;const normalized={id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""};if(id)items=items.map(x=>x.id===id?normalized:x);else items.push(normalized);status("Berhasil disimpan ke Supabase.")}catch(err){status("Gagal menyimpan: "+err.message,true);return}}
 else{if(id)items=items.map(x=>x.id===id?{...x,...row}:x);else items.push({...row,id:"local-"+Date.now()});status("Tersimpan di tampilan demo saja. Hubungkan Supabase agar tersimpan online.");}
 $("editor").close();render()});
+$("dlXlsx").addEventListener("click",()=>{
+  if(!window.XLSX){status("Library XLSX gagal dimuat. Cek koneksi internet lalu refresh.",true);return}
+  try{
+    const wb=XLSX.utils.book_new();
+    const names={hobbi:"Hobbi",konten:"Konten",kerja:"Kerja"};
+    Object.keys(names).forEach(tab=>{
+      const rows=items.filter(x=>x.tab===tab).map(x=>({"Kategori":x.title,"Link Drive":x.drive_url,"Google":x.google_value,"ID-Pasw":x.id_pasw,"Notes":x.notes}));
+      const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{"Kategori":"","Link Drive":"","Google":"","ID-Pasw":"","Notes":""}]);
+      ws["!cols"]=[{wch:24},{wch:50},{wch:28},{wch:24},{wch:40}];
+      XLSX.utils.book_append_sheet(wb,ws,names[tab]);
+    });
+    const d=new Date(),p=n=>String(n).padStart(2,"0");
+    XLSX.writeFile(wb,"dashboard-"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+".xlsx");
+    status("File XLSX berhasil diunduh.");
+  }catch(err){status("Gagal membuat XLSX: "+err.message,true)}
+});
 render();loadFromSupabase();
 </script>
 </body></html>
