@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Dashboard</title>
+<style>
+:root{--bg:#0d3d33;--blue:#176b91;--yellow:#f5e85c;--green:#83df68;--pale:#c9e6be;--ink:#102820;--text:#f4f5ef;--muted:#b9d8cd;--line:#2d6558}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
+header{padding:28px 22px 18px;text-align:center}h1{font-family:Georgia,serif;font-weight:900;font-size:clamp(24px,4vw,46px);letter-spacing:1px;margin:0;text-transform:uppercase}.sub{color:var(--muted);margin-top:9px;font-size:13px}
+.wrap{max-width:1450px;margin:auto;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:26px;align-items:start}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tab{border:0;background:#174e42;color:#d7eee3;padding:12px 20px;font-weight:800;border-radius:8px 8px 0 0;cursor:pointer}.tab.active{background:var(--blue);color:var(--yellow)}
+.tablehead,.item{display:grid;grid-template-columns:minmax(115px,1fr) minmax(150px,1.6fr) minmax(95px,.8fr) minmax(125px,1fr) minmax(130px,1fr);gap:12px;align-items:center}
+.tablehead{background:var(--blue);color:var(--yellow);padding:12px;border-radius:6px;font-weight:800;text-transform:uppercase}
+.section{margin-top:25px}.section h2{font-size:15px;letter-spacing:.5px;margin:0 0 10px;color:#e1eee7}
+.item{padding:10px 8px;border-bottom:1px solid var(--line);min-height:62px}.field{min-width:0;overflow-wrap:anywhere;color:#c7df82;font-weight:650}.field a{color:#f4f5ef;text-decoration:none}.field a:hover{text-decoration:underline}.category{background:var(--green);color:#12251b;border:0;padding:10px 12px;font-weight:850;text-transform:uppercase;display:inline-block;max-width:100%;overflow-wrap:anywhere}
+.edit{margin-top:5px;border:0;background:#d5eacb;color:#102820;border-radius:4px;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer}.value{display:block}.empty{color:#91b5a6;font-weight:400;font-size:13px}
+.add{border:0;background:var(--pale);color:var(--ink);font-weight:800;padding:10px 16px;margin:12px 0 0;cursor:pointer}.side{position:sticky;top:22px;text-align:center;padding-top:45px}.pie{width:210px;height:210px;max-width:100%;animation:spin 24s linear infinite;filter:drop-shadow(0 8px 18px #061f1a66)}@keyframes spin{to{transform:rotate(360deg)}}.side p{font-size:12px;color:var(--muted);line-height:1.5}
+.status{font-size:12px;color:var(--muted);min-height:18px;margin:10px 0}.status.error{color:#ffb5a8}.setup{background:#123f35;border:1px solid var(--line);padding:12px;border-radius:8px;margin-top:14px;font-size:12px;color:var(--muted)}
+dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius:12px;background:#103d33;color:var(--text);padding:22px;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#001b16bb}dialog h2{margin:0 0 16px}label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}input,textarea,select{width:100%;background:#092e27;color:#fff;border:1px solid #3c7565;border-radius:5px;padding:10px;font:inherit}textarea{min-height:75px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.btn{border:0;border-radius:5px;padding:10px 14px;font-weight:800;cursor:pointer}.primary{background:var(--green);color:#102820}.secondary{background:#25594d;color:#fff}.danger{background:#783d38;color:white}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.side{position:static;padding:8px 0 20px;grid-row:1}.pie{width:115px;height:115px}.side p{display:none}.tablehead{display:none}.item{grid-template-columns:1fr 1fr;gap:10px;padding:14px 8px}.field{background:#12483c;padding:9px;border-radius:5px}.category{width:100%}.section{margin-top:22px}}
+@media(max-width:480px){header{padding-top:22px}.wrap{padding:14px}.item{grid-template-columns:1fr}.field:before{display:block;color:#90b5a6;font-size:10px;text-transform:uppercase;margin-bottom:5px}.field[data-label]:before{content:attr(data-label)}.side{padding:0}.pie{width:80px;height:80px}}
+</style>
+</head>
+<body>
+<header><h1 id="greeting">WELCOME, BOSS … HAVE A GOOD DAY :)</h1><div class="sub">PERSONAL LINKS & WORKSPACE</div></header>
+<div class="wrap">
+<main>
+  <div class="toolbar" role="tablist" aria-label="Kategori">
+    <button class="tab active" data-tab="hobbi">Hobbi</button>
+    <button class="tab" data-tab="konten">Konten</button>
+    <button class="tab" data-tab="kerja">Kerja</button>
+  </div>
+  <div class="tablehead"><div>Kategori</div><div>Link Drive</div><div>Google</div><div>ID-Pasw</div><div>Notes</div></div>
+  <div id="sections"></div>
+  <div class="status" id="status" aria-live="polite">Demo mode aktif. Hubungkan Supabase untuk menyimpan perubahan online.</div>
+  <div class="setup" id="setupHint">Supabase belum dikonfigurasi. Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_ANON_KEY</b> di file index.html, lalu jalankan SQL pada <b>schema.sql</b>. Jangan pernah memasukkan service-role key ke HTML publik.</div>
+</main>
+<aside class="side" aria-label="Dekorasi"><svg class="pie" viewBox="0 0 200 200" role="img" aria-label="Animated decorative pie chart"><circle cx="100" cy="100" r="96" fill="#5d9bd0"/><path d="M100 100 L100 4 A96 96 0 0 1 156 22 Z" fill="#72addb"/><path d="M100 100 L156 22 A96 96 0 0 1 194 82 Z" fill="#4f91c7"/><path d="M100 100 L194 82 A96 96 0 0 1 172 166 Z" fill="#5d9bd0"/><path d="M100 100 L172 166 A96 96 0 0 1 100 196 Z" fill="#f17e2e"/><path d="M100 100 L100 196 A96 96 0 0 1 24 158 Z" fill="#f17e2e"/><path d="M100 100 L24 158 A96 96 0 0 1 8 72 Z" fill="#fff000"/><path d="M100 100 L8 72 A96 96 0 0 1 42 23 Z" fill="#ffeb00"/><path d="M100 100 L42 23 A96 96 0 0 1 100 4 Z" fill="#ffbf00"/><g stroke="#d9d6a6" stroke-width="1"><path d="M100 100V4 M100 100L156 22 M100 100L194 82 M100 100L172 166 M100 100V196 M100 100L24 158 M100 100L8 72 M100 100L42 23"/></g></svg><p>Little things, organized.<br>Big things, in progress.</p></aside>
+</div>
+<dialog id="editor"><form id="editForm"><h2 id="modalTitle">Edit item</h2><input type="hidden" id="itemId"><label for="fTitle">Kategori / nama</label><input id="fTitle" required maxlength="100"><label for="fDrive">Link Drive</label><input id="fDrive" type="url" placeholder="https://drive.google.com/..."><label for="fGoogle">Google / akun terkait</label><input id="fGoogle" maxlength="200"><label for="fPass">ID-Pasw (hindari password penting di dashboard publik)</label><input id="fPass" maxlength="200" autocomplete="off"><label for="fNotes">Notes</label><textarea id="fNotes" maxlength="2000"></textarea><div class="actions"><button type="button" class="btn secondary" id="cancel">Batal</button><button type="submit" class="btn primary">Simpan</button></div></form></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// 1) Isi kredensial project Supabase Anda di bawah ini.
+// Gunakan anon/publishable key + Row Level Security, BUKAN service_role key.
+const SUPABASE_URL = "https://nuzigytcmwqwjzufosxo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_QCQN5gFX7HnDBSPWe1TsRQ_4GJmzVrJ";
+const client = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const seed = [
+ {id:"demo-1",tab:"hobbi",title:"Instagram",drive_url:"https://google.com/andrews",google_value:"",id_pasw:"",notes:""},
+ {id:"demo-2",tab:"hobbi",title:"Threads",drive_url:"https://pxnulishandal.vercel.app",google_value:"",id_pasw:"",notes:""},
+ {id:"demo-3",tab:"konten",title:"YouTube",drive_url:"https://pxnulishandal.vercel.app",google_value:"",id_pasw:"",notes:""},
+ {id:"demo-4",tab:"kerja",title:"Simpan Kocs",drive_url:"https://pxnulishandal.vercel.app",google_value:"",id_pasw:"",notes:""}
+];
+let items = seed.map(x=>({...x}));
+let activeTab = "hobbi";
+const $ = id => document.getElementById(id);
+const greetings = ["WELCOME, BOSS … HAVE A GOOD DAY :)","HEY, BOSS! LET'S MAKE TODAY COUNT.","GOOD TO SEE YOU, BOSS. YOU'VE GOT THIS!","WELCOME BACK, BOSS — MAKE IT A GOOD ONE.","HELLO, BOSS! SMALL STEPS, BIG WINS.","ANOTHER DAY, ANOTHER CHANCE. LET'S GO!"];
+// Greeting is randomly chosen on each page access.
+$("greeting").textContent = greetings[Math.floor(Math.random()*greetings.length)];
+function status(msg,error=false){$("status").textContent=msg;$("status").classList.toggle("error",error)}
+function safeText(s){return String(s??"")}
+function urlOrText(value){let s=safeText(value).trim();if(/^https?:\/\/\S+/i.test(s)){let a=document.createElement("a");a.href=s;a.target="_blank";a.rel="noopener noreferrer";a.textContent=s;return a}let span=document.createElement("span");span.textContent=s||"—";if(!s)span.className="empty";return span}
+function field(value,label,item,key){let d=document.createElement("div");d.className="field";d.dataset.label=label;let v=document.createElement("div");v.className="value";
+if(key==="drive_url"){v.append(urlOrText(value))}
+else if(key==="id_pasw" && value){v.textContent="•".repeat(Math.min(String(value).length,12));v.title="Disamarkan"}
+else {v.textContent=safeText(value)||"—";if(!value)v.classList.add("empty")}
+d.append(v);let b=document.createElement("button");b.className="edit";b.textContent="Edit";b.onclick=()=>openEditor(item);d.append(b);return d}
+function render(){const root=$("sections");root.replaceChildren();const list=items.filter(x=>x.tab===activeTab);
+const sec=document.createElement("section");sec.className="section";const h=document.createElement("h2");h.textContent=activeTab.toUpperCase();sec.append(h);
+list.forEach(item=>{const row=document.createElement("div");row.className="item";const cat=document.createElement("div");cat.dataset.label="Kategori";const tag=document.createElement("span");tag.className="category";tag.textContent=item.title||"Untitled";cat.append(tag);let eb=document.createElement("button");eb.className="edit";eb.textContent="Edit";eb.onclick=()=>openEditor(item);cat.append(eb);row.append(cat,field(item.drive_url,"Link Drive",item,"drive_url"),field(item.google_value,"Google",item,"google_value"),field(item.id_pasw,"ID-Pasw",item,"id_pasw"),field(item.notes,"Notes",item,"notes"));sec.append(row)});
+const add=document.createElement("button");add.className="add";add.textContent="+ ADD";add.onclick=()=>openEditor({id:"",tab:activeTab,title:"",drive_url:"",google_value:"",id_pasw:"",notes:""});sec.append(add);root.append(sec)}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));render()}));
+function openEditor(item){$("itemId").value=item.id||"";$("fTitle").value=item.title||"";$("fDrive").value=item.drive_url||"";$("fGoogle").value=item.google_value||"";$("fPass").value=item.id_pasw||"";$("fNotes").value=item.notes||"";$("modalTitle").textContent=item.id?"Edit item":"Tambah item";$("editor").showModal()}
+$("cancel").onclick=()=>$("editor").close();
+async function loadFromSupabase(){if(!client)return;try{const {data,error}=await client.from("dashboard_items").select("*").order("sort_order",{ascending:true});if(error)throw error;items=data.map(r=>({id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""}));$("setupHint").hidden=true;status("Terhubung ke Supabase. Perubahan disimpan online.");render()}catch(e){status("Supabase belum bisa dibaca: "+e.message,true)}}
+$("editForm").addEventListener("submit",async e=>{e.preventDefault();const id=$("itemId").value;const old=items.find(x=>x.id===id);const row={tab:old?.tab||activeTab,title:$("fTitle").value.trim(),drive_url:$("fDrive").value.trim(),google_value:$("fGoogle").value.trim(),id_pasw:$("fPass").value,notes:$("fNotes").value.trim()};
+if(!row.title){status("Nama kategori wajib diisi.",true);return}
+if(client){try{let result;if(id){result=await client.from("dashboard_items").update(row).eq("id",id).select().single()}else{result=await client.from("dashboard_items").insert(row).select().single()}if(result.error)throw result.error;const r=result.data;const normalized={id:r.id,tab:r.tab,title:r.title,drive_url:r.drive_url||"",google_value:r.google_value||"",id_pasw:r.id_pasw||"",notes:r.notes||""};if(id)items=items.map(x=>x.id===id?normalized:x);else items.push(normalized);status("Berhasil disimpan ke Supabase.")}catch(err){status("Gagal menyimpan: "+err.message,true);return}}
+else{if(id)items=items.map(x=>x.id===id?{...x,...row}:x);else items.push({...row,id:"local-"+Date.now()});status("Tersimpan di tampilan demo saja. Hubungkan Supabase agar tersimpan online.");}
+$("editor").close();render()});
+render();loadFromSupabase();
+</script>
+</body></html>
