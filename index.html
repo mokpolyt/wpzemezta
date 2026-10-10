@@ -53,8 +53,8 @@ dialog{width:min(520px,calc(100% - 28px));border:1px solid #508777;border-radius
 <script>
 // 1) Isi kredensial project Supabase Anda di bawah ini.
 // Gunakan anon/publishable key + Row Level Security, BUKAN service_role key.
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://nuzigytcmwqwjzufosxo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_QCQN5gFX7HnDBSPWe1TsRQ_4GJmzVrJ";
 const client = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let currentUser = null;
